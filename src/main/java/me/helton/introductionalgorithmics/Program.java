@@ -12,37 +12,28 @@ import java.util.concurrent.TimeUnit;
  */
 public class Program {
     private static Random random = new Random();
+    private static IStockTrader stockTrader = new StockTrader();
+    private static InvestmentAnalyzer analyzer = new InvestmentAnalyzer(stockTrader);
+    private static Stopwatch stopwatch = Stopwatch.createUnstarted();
 
-    public static void main(String[] args) throws InterruptedException {
-        IStockTrader stockTrader = new StockTrader();
-        InvestmentAnalyzer analyzer = new InvestmentAnalyzer(stockTrader);
-        Stopwatch stopwatch = Stopwatch.createUnstarted();
+    public static void main(String[] args) {
+        execute("Querying", () -> {
+            for (int i = 0; i < 100000; i++)
+                analyzer.handleQuery(createQuery());
+        });
 
-        //Simulate queries
-        System.out.println("Querying...");
+        execute("Analyzing queries", () -> analyzer.analyzeQueries());
+
+        execute("Handling tradings", () -> stockTrader.handleTradings());
+    }
+
+    private static void execute(String message, Runnable func) {
+        System.out.println(String.format("=> %s ...", message));
+        stopwatch.reset();
         stopwatch.start();
-        for (int i = 0; i < 100000; i++)
-            analyzer.handleQuery(createQuery());
+        func.run();
         stopwatch.stop();
         long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-        System.out.printf("Done in %d ms\n", elapsed);
-
-        //Analyze queries
-        System.out.println("Analyzing queries...");
-        stopwatch.reset();
-        stopwatch.start();
-        analyzer.analyzeQueries();
-        stopwatch.stop();
-        elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-        System.out.printf("Done in %d ms\n", elapsed);
-
-        //Simulate handling of stock tradings
-        System.out.println("Handling tradings...");
-        stopwatch.reset();
-        stopwatch.start();
-        stockTrader.handleTradings();
-        stopwatch.stop();
-        elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
         System.out.printf("Done in %d ms\n", elapsed);
     }
 
